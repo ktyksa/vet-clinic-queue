@@ -59,6 +59,12 @@ export const navigationGroups: NavigationGroup[] = [
         actionName: "view",
       },
       {
+        label: "Grooming",
+        href: "/grooming",
+        moduleName: "groomer",
+        actionName: "view",
+      },
+      {
         label: "Billing",
         href: "/billing",
         moduleName: "payment",
@@ -96,6 +102,12 @@ export const navigationGroups: NavigationGroup[] = [
         label: "Vaccines",
         href: "/setup/vaccines",
         moduleName: "visit",
+        actionName: "create",
+      },
+      {
+        label: "Grooming Services",
+        href: "/setup/grooming-services",
+        moduleName: "groomer",
         actionName: "create",
       },
     ],

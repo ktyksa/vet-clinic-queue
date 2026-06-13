@@ -40,6 +40,7 @@ model User {
   authoredPrescriptions      Prescription[]             @relation("PrescriptionVet")
   visits                     Visit[]
   medicalQueues              MedicalQueue[]             @relation("MedicalQueueVeterinarian")
+  groomingQueues             GroomingQueue[]            @relation("GroomingQueueGroomer")
 
   @@index([role])
   @@index([status])
@@ -78,6 +79,7 @@ model Owner {
   medicalQueues     MedicalQueue[]
   invoices          Invoice[]
   prescriptions     Prescription[]
+  groomingQueues    GroomingQueue[]
 
   @@index([phoneNo])
   @@index([fullName])
@@ -167,6 +169,7 @@ model Pet {
   prescriptions         Prescription[]
   visits                Visit[]
   medicalQueues         MedicalQueue[]
+  groomingQueues        GroomingQueue[]
 
   @@index([ownerId])
   @@index([speciesId])
@@ -208,6 +211,7 @@ model Appointment {
   groomingSession GroomingSession?
   visit           Visit?
   vaccineReminder VaccineReminder?
+  groomingQueue   GroomingQueue?
 
   @@index([ownerId])
   @@index([petId])
@@ -753,6 +757,79 @@ model PrescriptionItem {
   @@index([prescriptionId])
 }
 
+model GroomingService {
+  groomingServiceId String             @id @default(uuid())
+  serviceName       String
+  price             Decimal            @db.Decimal(12, 2)
+  durationMin       Int                @default(30)
+  isActive          Boolean            @default(true)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  createdByUserId   String?
+  updatedByUserId   String?
+
+  items GroomingQueueItem[]
+
+  @@index([isActive])
+}
+
+model GroomingQueue {
+  groomingQueueId String              @id @default(cuid())
+  queueNumber     Int
+  queueDate       DateTime
+  source          GroomingSource      @default(WALK_IN)
+  status          GroomingQueueStatus @default(WAITING)
+  ownerId         String
+  petId           String
+  groomerId       String?
+  appointmentId   String?             @unique
+  checkedInAt     DateTime?
+  startedAt       DateTime?
+  completedAt     DateTime?
+  cancelledAt     DateTime?
+  noShowAt        DateTime?
+  notes           String?
+  specialRequests String?
+  invoiceId       String?
+  cancelReason    String?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  createdByUserId String?
+  updatedByUserId String?
+
+  owner       Owner               @relation(fields: [ownerId], references: [ownerId])
+  pet         Pet                 @relation(fields: [petId], references: [petId])
+  groomer     User?               @relation("GroomingQueueGroomer", fields: [groomerId], references: [userId])
+  appointment Appointment?        @relation(fields: [appointmentId], references: [appointmentId])
+  items       GroomingQueueItem[]
+
+  @@unique([queueDate, queueNumber])
+  @@index([queueDate])
+  @@index([status])
+  @@index([ownerId])
+  @@index([petId])
+  @@index([groomerId])
+  @@index([appointmentId])
+  @@index([source])
+}
+
+model GroomingQueueItem {
+  groomingQueueItemId String @id @default(uuid())
+  groomingQueueId     String
+  serviceId           String
+  priceSnapshot       Decimal @db.Decimal(12, 2)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  createdByUserId     String?
+  updatedByUserId     String?
+
+  groomingQueue   GroomingQueue   @relation(fields: [groomingQueueId], references: [groomingQueueId])
+  groomingService GroomingService @relation(fields: [serviceId], references: [groomingServiceId])
+
+  @@index([groomingQueueId])
+  @@index([serviceId])
+}
+
 model AuditLog {
   auditLogId      String   @id @default(uuid())
   userId          String?
@@ -982,6 +1059,20 @@ enum PrescriptionStatus {
   READY_FOR_DISPENSING
   DISPENSED
   CANCELLED
+}
+
+enum GroomingSource {
+  APPOINTMENT
+  WALK_IN
+}
+
+enum GroomingQueueStatus {
+  WAITING
+  IN_PROGRESS
+  COMPLETED
+  BILLED
+  CANCELLED
+  NO_SHOW
 }
 
 enum NotificationStatus {
