@@ -7,6 +7,7 @@ import {
   completeGroomingService,
   cancelGroomingQueue,
 } from "@/actions/grooming-queue.actions";
+import { createInvoiceFromGrooming } from "@/actions/billing.actions";
 import type { GroomingQueueStatus } from "@/generated/prisma/client";
 
 interface Props {
@@ -48,6 +49,7 @@ export default async function GroomingDetailPage({ params }: Props) {
 
   const startAction = startGroomingService.bind(null, queue.groomingQueueId);
   const completeAction = completeGroomingService.bind(null, queue.groomingQueueId);
+  const createInvoiceAction = createInvoiceFromGrooming.bind(null, queue.groomingQueueId);
 
   const total = queue.items.reduce((sum: number, item: typeof queue.items[number]) => sum + Number(item.priceSnapshot), 0);
 
@@ -206,7 +208,7 @@ export default async function GroomingDetailPage({ params }: Props) {
         )}
 
         {/* Actions */}
-        {(canStart || canComplete || canCancel) && (
+        {(canStart || canComplete || canCancel || queue.status === "COMPLETED") && (
           <div className="mt-6 flex flex-wrap gap-3">
             {canStart && (
               <form action={startAction}>
@@ -230,6 +232,17 @@ export default async function GroomingDetailPage({ params }: Props) {
               </form>
             )}
 
+            {queue.status === "COMPLETED" && (
+              <form action={createInvoiceAction}>
+                <button
+                  type="submit"
+                  className="rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-blue-700"
+                >
+                  สร้างใบแจ้งหนี้
+                </button>
+              </form>
+            )}
+
             {canCancel && (
               <form action={cancelGroomingQueue}>
                 <input type="hidden" name="groomingQueueId" value={queue.groomingQueueId} />
@@ -240,6 +253,15 @@ export default async function GroomingDetailPage({ params }: Props) {
                   ยกเลิกคิว
                 </button>
               </form>
+            )}
+
+            {queue.status === "BILLED" && queue.invoice && (
+              <Link
+                href={`/billing/${queue.invoice.invoiceId}`}
+                className="rounded-lg border border-emerald-300 bg-emerald-50 px-6 py-2.5 text-sm font-medium text-emerald-700 hover:bg-emerald-100"
+              >
+                ดูใบแจ้งหนี้ {queue.invoice.invoiceNo}
+              </Link>
             )}
 
             {queue.status === "CANCELLED" && queue.cancelReason && (

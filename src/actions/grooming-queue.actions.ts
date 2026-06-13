@@ -327,6 +327,7 @@ export async function getGroomingQueueById(groomingQueueId: string) {
           groomingService: { select: { groomingServiceId: true, serviceName: true, durationMin: true } },
         },
       },
+      invoice: { select: { invoiceId: true, invoiceNo: true, status: true } },
     },
   });
 }

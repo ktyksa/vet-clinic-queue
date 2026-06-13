@@ -65,6 +65,12 @@ export const navigationGroups: NavigationGroup[] = [
         actionName: "view",
       },
       {
+        label: "Grooming Calendar",
+        href: "/grooming/appointments",
+        moduleName: "groomer",
+        actionName: "view",
+      },
+      {
         label: "Billing",
         href: "/billing",
         moduleName: "payment",

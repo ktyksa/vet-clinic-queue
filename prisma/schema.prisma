@@ -211,7 +211,8 @@ model Appointment {
   groomingSession GroomingSession?
   visit           Visit?
   vaccineReminder VaccineReminder?
-  groomingQueue   GroomingQueue?
+  groomingQueue    GroomingQueue?
+  groomingServices GroomingAppointmentService[]
 
   @@index([ownerId])
   @@index([petId])
@@ -654,10 +655,15 @@ model VaccineReminder {
 model Invoice {
   invoiceId       String         @id @default(uuid())
   invoiceNo       String         @unique
-  visitId         String         @unique
+  invoiceDate     DateTime       @default(now())
+  source          InvoiceSource  @default(MEDICAL)
+  visitId         String?        @unique
+  groomingQueueId String?        @unique
   petId           String
   ownerId         String
-  status          InvoiceStatus  @default(WAITING_FOR_PAYMENT)
+  status          InvoiceStatus  @default(PENDING)
+  subtotal        Decimal        @default(0) @db.Decimal(12, 2)
+  discount        Decimal        @default(0) @db.Decimal(12, 2)
   totalAmount     Decimal        @default(0) @db.Decimal(12, 2)
   paidAmount      Decimal?       @db.Decimal(12, 2)
   paymentMethod   PaymentMethod?
@@ -672,15 +678,19 @@ model Invoice {
   createdByUserId String?
   updatedByUserId String?
 
-  visit  Visit         @relation(fields: [visitId], references: [visitId])
-  pet    Pet           @relation(fields: [petId], references: [petId])
-  owner  Owner         @relation(fields: [ownerId], references: [ownerId])
-  items  InvoiceItem[]
+  visit         Visit?         @relation(fields: [visitId], references: [visitId])
+  groomingQueue GroomingQueue? @relation(fields: [groomingQueueId], references: [groomingQueueId])
+  pet           Pet            @relation(fields: [petId], references: [petId])
+  owner         Owner          @relation(fields: [ownerId], references: [ownerId])
+  items         InvoiceItem[]
 
   @@index([visitId])
+  @@index([groomingQueueId])
   @@index([petId])
   @@index([ownerId])
   @@index([status])
+  @@index([invoiceDate])
+  @@index([source])
   @@index([paidAt])
   @@index([createdAt])
 }
@@ -768,7 +778,8 @@ model GroomingService {
   createdByUserId   String?
   updatedByUserId   String?
 
-  items GroomingQueueItem[]
+  items               GroomingQueueItem[]
+  appointmentServices GroomingAppointmentService[]
 
   @@index([isActive])
 }
@@ -790,7 +801,6 @@ model GroomingQueue {
   noShowAt        DateTime?
   notes           String?
   specialRequests String?
-  invoiceId       String?
   cancelReason    String?
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
@@ -802,6 +812,7 @@ model GroomingQueue {
   groomer     User?               @relation("GroomingQueueGroomer", fields: [groomerId], references: [userId])
   appointment Appointment?        @relation(fields: [appointmentId], references: [appointmentId])
   items       GroomingQueueItem[]
+  invoice     Invoice?
 
   @@unique([queueDate, queueNumber])
   @@index([queueDate])
@@ -827,6 +838,19 @@ model GroomingQueueItem {
   groomingService GroomingService @relation(fields: [serviceId], references: [groomingServiceId])
 
   @@index([groomingQueueId])
+  @@index([serviceId])
+}
+
+model GroomingAppointmentService {
+  id            String          @id @default(cuid())
+  appointmentId String
+  serviceId     String
+
+  appointment   Appointment     @relation(fields: [appointmentId], references: [appointmentId])
+  service       GroomingService @relation(fields: [serviceId], references: [groomingServiceId])
+
+  @@unique([appointmentId, serviceId])
+  @@index([appointmentId])
   @@index([serviceId])
 }
 
@@ -961,6 +985,7 @@ enum AppointmentType {
   SICK
   FOLLOW_UP
   SURGERY
+  GROOMING
   OTHER
 }
 
@@ -1033,8 +1058,10 @@ enum VaccineReminderStatus {
 }
 
 enum InvoiceStatus {
+  PENDING
   WAITING_FOR_PAYMENT
   PAID
+  CANCELLED
   VOIDED
 }
 
@@ -1046,11 +1073,19 @@ enum InvoiceItemType {
   OTHER
 }
 
+enum InvoiceSource {
+  MEDICAL
+  GROOMING
+  RETAIL
+  MIXED
+}
+
 enum PaymentMethod {
   CASH
   CREDIT_CARD
   DEBIT_CARD
   TRANSFER
+  QR_CODE
   OTHER
 }
 
