@@ -49,6 +49,14 @@ export function generateAppointmentNo(date = new Date()): string {
   return `APT-${formatDatePart(date)}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
 }
 
+export function generateInvoiceNo(date = new Date()): string {
+  return `INV-${formatDatePart(date)}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
+}
+
+export function generatePrescriptionNo(date = new Date()): string {
+  return `RX-${formatDatePart(date)}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
+}
+
 export function generateQueueCode(queueDate: Date, queueNumber: number): string {
   return `MQ-${formatDatePart(queueDate)}-${String(queueNumber).padStart(3, "0")}`;
 }

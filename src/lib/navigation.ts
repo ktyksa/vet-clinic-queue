@@ -58,6 +58,18 @@ export const navigationGroups: NavigationGroup[] = [
         moduleName: "vaccine",
         actionName: "view",
       },
+      {
+        label: "Billing",
+        href: "/billing",
+        moduleName: "payment",
+        actionName: "view",
+      },
+      {
+        label: "Pharmacy",
+        href: "/pharmacy",
+        moduleName: "prescription",
+        actionName: "view",
+      },
     ],
   },
   {

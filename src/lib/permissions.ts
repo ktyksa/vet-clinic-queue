@@ -167,8 +167,9 @@ visit: {
 },
 
   payment: {
-    view: ["ADMIN", "CLINIC_OWNER", "CASHIER", "RECEPTIONIST"],
+    view: ["ADMIN", "CLINIC_OWNER", "CASHIER", "RECEPTIONIST", "STAFF"],
     create: ["ADMIN", "CLINIC_OWNER", "CASHIER"],
+    update: ["ADMIN", "CLINIC_OWNER", "CASHIER"],
     void: ["ADMIN", "CLINIC_OWNER"],
   },
 
@@ -189,7 +190,20 @@ visit: {
   },
   lab: {},
   inventory: {},
-  prescription: {},
+  prescription: {
+    view: [
+      "ADMIN",
+      "CLINIC_OWNER",
+      "VETERINARIAN",
+      "VET_ASSISTANT",
+      "PHARMACIST",
+      "RECEPTIONIST",
+      "STAFF",
+    ],
+    create: ["ADMIN", "CLINIC_OWNER", "VETERINARIAN", "VET_ASSISTANT"],
+    update: ["ADMIN", "CLINIC_OWNER", "PHARMACIST", "VETERINARIAN", "VET_ASSISTANT"],
+    delete: ["ADMIN", "CLINIC_OWNER"],
+  },
   ipd: {},
   groomer: {},
   notification: {},

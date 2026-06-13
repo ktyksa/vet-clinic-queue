@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/auth/require-auth";
-import { generateVisitNo, toJsonDate } from "@/lib/action-utils";
+import { generateVisitNo, generateInvoiceNo, generatePrescriptionNo, toJsonDate } from "@/lib/action-utils";
 import {
   AppointmentStatus,
   type AppointmentType,
@@ -614,10 +614,69 @@ export async function updateVisitStatus(visitId: string, status: VisitStatus) {
       });
     }
 
+    if (status === "COMPLETED") {
+      // Auto-create Invoice + Prescription; upsert so repeat calls are idempotent
+      const vaccineRecords = await tx.vaccineRecord.findMany({
+        where: { visitId, deletedAt: null },
+        include: { vaccine: { select: { vaccineName: true, price: true } } },
+      });
+
+      const invoiceItems = vaccineRecords.flatMap((r) => {
+        if (!r.vaccine.price) return [];
+        return [{
+          itemType: "VACCINE" as const,
+          itemName: r.vaccine.vaccineName,
+          quantity: new Prisma.Decimal(1),
+          unitPrice: r.vaccine.price,
+          totalPrice: r.vaccine.price,
+          createdByUserId: currentUser.userId,
+          updatedByUserId: currentUser.userId,
+        }];
+      });
+
+      const totalAmount = invoiceItems.reduce(
+        (sum, item) => sum.add(item.totalPrice),
+        new Prisma.Decimal(0),
+      );
+
+      await tx.invoice.upsert({
+        where: { visitId },
+        update: {},
+        create: {
+          invoiceNo: generateInvoiceNo(),
+          visitId,
+          petId: result.petId,
+          ownerId: result.ownerId,
+          totalAmount,
+          createdByUserId: currentUser.userId,
+          updatedByUserId: currentUser.userId,
+          ...(invoiceItems.length > 0 && { items: { create: invoiceItems } }),
+        },
+      });
+
+      await tx.prescription.upsert({
+        where: { visitId },
+        update: {},
+        create: {
+          prescriptionNo: generatePrescriptionNo(),
+          visitId,
+          petId: result.petId,
+          ownerId: result.ownerId,
+          vetId: result.vetId ?? currentUser.userId,
+          createdByUserId: currentUser.userId,
+          updatedByUserId: currentUser.userId,
+        },
+      });
+    }
+
     return result;
   });
 
   revalidateVisitPaths(updatedVisit.visitId, updatedVisit.appointmentId);
+  if (status === "COMPLETED") {
+    revalidatePath("/billing");
+    revalidatePath("/pharmacy");
+  }
 
   return updatedVisit;
 }
