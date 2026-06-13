@@ -52,6 +52,12 @@ export const navigationGroups: NavigationGroup[] = [
         moduleName: "visit",
         actionName: "view",
       },
+      {
+        label: "Vaccine Reminders",
+        href: "/vaccines/reminders",
+        moduleName: "vaccine",
+        actionName: "view",
+      },
     ],
   },
   {

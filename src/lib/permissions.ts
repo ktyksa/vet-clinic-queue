@@ -20,7 +20,8 @@ export type ModuleName =
   | "notification" // ระบบแจ้งเตือน/LINE
   | "auditLog" // ประวัติการเข้าถึงข้อมูล
   | "report" // รายงานบัญชีและสถิติคลินิก
-  | "medicalDocument"; // เอกสารทางการแพทย์ เช่น ใบรับรองแพทย์, ใบส่งตรวจ, ใบสั่งยา, ส่งต่อโรงพยาบาลสัตว์, ส่งต่อ Specialist, ส่งต่อ MRI / CT, ส่งต่อ Lab ภายนอก
+  | "medicalDocument" // เอกสารทางการแพทย์ เช่น ใบรับรองแพทย์, ใบส่งตรวจ, ใบสั่งยา, ส่งต่อโรงพยาบาลสัตว์, ส่งต่อ Specialist, ส่งต่อ MRI / CT, ส่งต่อ Lab ภายนอก
+  | "vaccine"; // ประวัติวัคซีนและระบบ reminder
 
 export type ActionName =
   | "view"
@@ -195,6 +196,21 @@ visit: {
   auditLog: {},
   report: {},
   medicalDocument: {},
+
+  vaccine: {
+    view: [
+      "ADMIN",
+      "CLINIC_OWNER",
+      "VETERINARIAN",
+      "VET_ASSISTANT",
+      "RECEPTIONIST",
+      "CASHIER",
+      "STAFF",
+    ],
+    create: ["ADMIN", "CLINIC_OWNER", "VETERINARIAN", "VET_ASSISTANT"],
+    update: ["ADMIN", "CLINIC_OWNER", "VETERINARIAN", "VET_ASSISTANT"],
+    delete: ["ADMIN", "CLINIC_OWNER"],
+  },
 };
 
 export function hasPermission(

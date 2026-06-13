@@ -569,12 +569,16 @@ export default async function PetMedicalHistoryPage({
                         {record.status}
                       </td>
                       <td className="border-b px-3 py-2 text-slate-700">
-                        <Link
-                          href={`/visits/${record.visitId}`}
-                          className="font-bold text-blue-600 hover:text-blue-700 hover:underline"
-                        >
-                          {record.visit.visitNo}
-                        </Link>
+                        {record.visit ? (
+                          <Link
+                            href={`/visits/${record.visitId}`}
+                            className="font-bold text-blue-600 hover:text-blue-700 hover:underline"
+                          >
+                            {record.visit.visitNo}
+                          </Link>
+                        ) : (
+                          <span className="text-slate-400">-</span>
+                        )}
                       </td>
                     </tr>
                   ))}

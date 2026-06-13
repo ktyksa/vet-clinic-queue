@@ -159,6 +159,7 @@ model Pet {
   owner                 Owner           @relation(fields: [ownerId], references: [ownerId])
   species               Species         @relation(fields: [speciesId], references: [speciesId])
   vaccineRecords        VaccineRecord[]
+  vaccineReminders      VaccineReminder[]
   visits                Visit[]
   medicalQueues         MedicalQueue[]
 
@@ -201,6 +202,7 @@ model Appointment {
   statusHistories AppointmentStatusHistory[]
   groomingSession GroomingSession?
   visit           Visit?
+  vaccineReminder VaccineReminder?
 
   @@index([ownerId])
   @@index([petId])
@@ -572,6 +574,9 @@ model Vaccine {
   deletedAt           DateTime?
   createdByUserId     String?
   updatedByUserId     String?
+  brand               String?
+  targetDisease       String?
+  boosterRequired     Boolean         @default(false)
   species             Species         @relation(fields: [speciesId], references: [speciesId])
   records             VaccineRecord[]
 
@@ -582,7 +587,7 @@ model Vaccine {
 
 model VaccineRecord {
   vaccineRecordId   String              @id @default(uuid())
-  visitId           String
+  visitId           String?
   petId             String
   vaccineId         String
   vetId             String
@@ -601,13 +606,37 @@ model VaccineRecord {
   pet               Pet                 @relation(fields: [petId], references: [petId])
   vaccine           Vaccine             @relation(fields: [vaccineId], references: [vaccineId])
   vet               User                @relation(fields: [vetId], references: [userId])
-  visit             Visit               @relation(fields: [visitId], references: [visitId])
+  visit             Visit?              @relation(fields: [visitId], references: [visitId])
+  reminders         VaccineReminder[]
 
   @@index([visitId])
   @@index([petId])
   @@index([vaccineId])
   @@index([vetId])
   @@index([nextDueDate])
+  @@index([status])
+}
+
+model VaccineReminder {
+  vaccineReminderId String                @id @default(uuid())
+  petId             String
+  vaccineRecordId   String
+  dueDate           DateTime
+  status            VaccineReminderStatus @default(UPCOMING)
+  reminderSentAt    DateTime?
+  appointmentId     String?               @unique
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  createdByUserId   String?
+  updatedByUserId   String?
+
+  pet           Pet           @relation(fields: [petId], references: [petId])
+  vaccineRecord VaccineRecord @relation(fields: [vaccineRecordId], references: [vaccineRecordId])
+  appointment   Appointment?  @relation(fields: [appointmentId], references: [appointmentId])
+
+  @@index([petId])
+  @@index([vaccineRecordId])
+  @@index([dueDate])
   @@index([status])
 }
 
@@ -802,6 +831,14 @@ enum GroomingStatus {
 enum VaccineRecordStatus {
   GIVEN
   MISSED
+  CANCELLED
+}
+
+enum VaccineReminderStatus {
+  UPCOMING
+  DUE
+  OVERDUE
+  COMPLETED
   CANCELLED
 }
 

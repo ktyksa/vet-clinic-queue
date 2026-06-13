@@ -81,6 +81,13 @@ export default async function PetDetailPage({ params }: Props) {
 
           <div className="flex flex-wrap items-center justify-end gap-3">
             <Link
+              href={`/pets/${pet.petId}/vaccines`}
+              className="rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
+            >
+              ประวัติวัคซีน
+            </Link>
+
+            <Link
               href={`/pets/${pet.petId}/medical-history`}
               className="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700"
             >
@@ -265,7 +272,6 @@ export default async function PetDetailPage({ params }: Props) {
             <div className="grid gap-3 sm:grid-cols-2">
               <DisabledAction label="Appointments" />
               <DisabledAction label="Visit History" />
-              <DisabledAction label="Vaccination Records" />
               <DisabledAction label="Medical Record" />
             </div>
           </InfoCard>
