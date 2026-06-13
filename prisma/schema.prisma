@@ -750,12 +750,14 @@ model Prescription {
 model PrescriptionItem {
   prescriptionItemId String   @id @default(uuid())
   prescriptionId     String
+  drugId             String?
   medicationName     String
   dosage             String?
   frequency          String?
   duration           String?
   quantity           Decimal  @db.Decimal(10, 3)
   unit               String?
+  pricePerUnit       Decimal? @db.Decimal(10, 2)
   instructions       String?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
@@ -763,8 +765,30 @@ model PrescriptionItem {
   updatedByUserId    String?
 
   prescription Prescription @relation(fields: [prescriptionId], references: [prescriptionId])
+  drug         Drug?        @relation(fields: [drugId], references: [drugId])
 
   @@index([prescriptionId])
+  @@index([drugId])
+}
+
+model Drug {
+  drugId       String   @id @default(cuid())
+  name         String
+  genericName  String?
+  unit         String
+  stockQty     Int      @default(0)
+  minStock     Int      @default(10)
+  pricePerUnit Decimal  @db.Decimal(10, 2)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  createdByUserId String?
+  updatedByUserId String?
+
+  prescriptionItems PrescriptionItem[]
+
+  @@index([name])
+  @@index([isActive])
 }
 
 model GroomingService {
@@ -1090,7 +1114,9 @@ enum PaymentMethod {
 }
 
 enum PrescriptionStatus {
+  DRAFT
   PREPARING
+  FINALIZED
   READY_FOR_DISPENSING
   DISPENSED
   CANCELLED

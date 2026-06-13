@@ -116,6 +116,12 @@ export const navigationGroups: NavigationGroup[] = [
         moduleName: "groomer",
         actionName: "create",
       },
+      {
+        label: "Drugs",
+        href: "/setup/drugs",
+        moduleName: "prescription",
+        actionName: "create",
+      },
     ],
   },
 ];
