@@ -1,0 +1,33 @@
+UAT Fix Patch Only
+
+ไฟล์ใน ZIP นี้มีเฉพาะไฟล์ที่แก้ไข ไม่ใช่ ZIP ทั้งโปรเจกต์
+
+Changed files:
+1. src/actions/medical-queue.actions.ts
+   - ปรับ createVisitFromQueue ให้ redirect ไปหน้า Visit พร้อม query focus=workflow
+   - รองรับ workflow จาก Queue ไป Visit ให้ชัดขึ้น
+
+2. src/actions/visit.actions.ts
+   - ปรับ Complete Visit validation ให้บังคับ SOAP Finalized และ Diagnosis ก่อน Complete
+   - เพิ่ม message ชัดเจนเมื่อยัง Complete ไม่ได้
+
+3. src/app/medical-queue/page.tsx
+   - เพิ่ม Queue Summary Card: Waiting / In Service / Completed / No Show
+   - ปรับ card/action ให้ผู้ใช้เห็นสถานะงานชัดขึ้น
+
+4. src/app/visits/[id]/page.tsx
+   - เพิ่ม Workflow Guide / Focus Area
+   - Highlight action ถัดไป เช่น Open SOAP หรือ Complete Visit
+   - รองรับ query focus=workflow เพื่อ focus จุดทำงานหลังมาจาก Queue
+
+5. src/app/visits/[id]/edit/page.tsx
+   - เพิ่ม Pain Score required highlight
+   - ทำให้ field ที่จำเป็นชัดขึ้นตาม UAT
+
+6. src/app/visits/[id]/soap/page.tsx
+   - เพิ่มปุ่มกลับไป Visit Workflow หลัง SOAP Finalized
+   - เพิ่ม highlight/next action เพื่อให้รู้ว่าต้อง Complete Visit ต่อ
+
+หมายเหตุ:
+- ZIP ต้นทางไม่มี package.json จึงยังไม่สามารถ npm run build ใน sandbox ได้
+- ให้นำไฟล์ใน ZIP นี้ไปทับ path เดิมในโปรเจกต์

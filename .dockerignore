@@ -1,0 +1,17 @@
+.git
+.github
+.next
+node_modules
+npm-debug.log*
+.env
+.env.*
+!.env.example
+uploads
+public/uploads
+coverage
+*.test.ts
+*.test.tsx
+src/__tests__
+vitest.config.ts
+docker-compose.yml
+Dockerfile

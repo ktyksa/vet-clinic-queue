@@ -1,0 +1,843 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  userId                     String                     @id @default(uuid())
+  fullName                   String
+  email                      String?                    @unique
+  phoneNo                    String?
+  activeFlag                 Boolean                    @default(true)
+  createdAt                  DateTime                   @default(now())
+  updatedAt                  DateTime                   @updatedAt
+  licenseNo                  String?
+  role                       UserRole                   @default(STAFF)
+  failedLoginCount           Int                        @default(0)
+  lastLoginAt                DateTime?
+  lockedUntil                DateTime?
+  passwordHash               String?
+  deactivatedAt              DateTime?
+  deactivatedByUserId        String?
+  preferredLanguage          Language                   @default(TH)
+  resignedAt                 DateTime?
+  resignedReason             String?
+  status                     UserStatus                 @default(ACTIVE)
+  createdByUserId            String?
+  updatedByUserId            String?
+  deletedAt                  DateTime?
+  appointmentVetAssignments  Appointment[]              @relation("AppointmentVeterinarian")
+  appointmentStatusHistories AppointmentStatusHistory[]
+  groomerBlockTimes          BlockTime[]                @relation("BlockTimeGroomer")
+  veterinarianBlockTimes     BlockTime[]                @relation("BlockTimeVeterinarian")
+  groomingSessions           GroomingSession[]          @relation("GroomingSessionGroomer")
+  soapNotes                  SoapNote[]
+  vaccineRecords             VaccineRecord[]
+  visits                     Visit[]
+  medicalQueues              MedicalQueue[]             @relation("MedicalQueueVeterinarian")
+
+  @@index([role])
+  @@index([status])
+  @@index([activeFlag])
+  @@index([licenseNo])
+  @@index([preferredLanguage])
+  @@index([deletedAt])
+}
+
+model Owner {
+  ownerId           String         @id @default(uuid())
+  fullName          String
+  phoneNo           String
+  lineId            String?
+  email             String?
+  remark            String?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  buildingName      String?
+  country           String?        @default("Thailand")
+  district          String?
+  houseNo           String?
+  othersSocialMedia String?
+  postalCode        String?
+  province          String?
+  road              String?
+  soi               String?
+  subDistrict       String?
+  villageName       String?
+  deletedAt         DateTime?
+  createdByUserId   String?
+  updatedByUserId   String?
+  appointments      Appointment[]
+  pets              Pet[]
+  visits            Visit[]
+  medicalQueues     MedicalQueue[]
+
+  @@index([phoneNo])
+  @@index([fullName])
+  @@index([province])
+  @@index([postalCode])
+  @@index([deletedAt])
+}
+
+model Species {
+  speciesId       String    @id @default(uuid())
+  speciesCode     String    @unique
+  speciesName     String
+  activeFlag      Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+  createdByUserId String?
+  updatedByUserId String?
+  breeds          Breed[]
+  pets            Pet[]
+  vaccines        Vaccine[]
+
+  @@index([activeFlag])
+}
+
+model Breed {
+  breedId         String    @id @default(uuid())
+  breedName       String
+  speciesId       String
+  activeFlag      Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+  createdByUserId String?
+  updatedByUserId String?
+  species         Species   @relation(fields: [speciesId], references: [speciesId])
+  pets            Pet[]
+
+  @@unique([speciesId, breedName])
+  @@index([speciesId])
+  @@index([activeFlag])
+}
+
+model Pet {
+  petId                 String          @id @default(uuid())
+  ownerId               String
+  petName               String
+  birthDate             DateTime?
+  marking               String?
+  microchipNo           String?         @unique
+  remark                String?
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+  breedId               String?
+  coatColorPrimary      String?
+  coatColorSecondary    String?
+  coatPattern           String?
+  estimatedAge          String?
+  hairType              String?
+  microchipVerifiedAt   DateTime?
+  pedigreeName          String?
+  speciesId             String
+  bloodType             String?
+  insuranceNo           String?
+  pedigreeNo            String?
+  petPhotoUrl           String?
+  rabiesTagNo           String?
+  bodySize              BodySize        @default(UNKNOWN)
+  gender                Gender          @default(UNKNOWN)
+  status                PetStatus       @default(ACTIVE)
+  neuterStatus          NeuterStatus    @default(UNKNOWN)
+  deletedAt             DateTime?
+  createdByUserId       String?
+  updatedByUserId       String?
+  high                  Decimal?        @db.Decimal(10, 2)
+  weight                Decimal?        @db.Decimal(10, 2)
+  allergyNote           String?
+  chronicConditionNote  String?
+  importantMedicalAlert String?
+  appointments          Appointment[]
+  breed                 Breed?          @relation(fields: [breedId], references: [breedId])
+  owner                 Owner           @relation(fields: [ownerId], references: [ownerId])
+  species               Species         @relation(fields: [speciesId], references: [speciesId])
+  vaccineRecords        VaccineRecord[]
+  visits                Visit[]
+  medicalQueues         MedicalQueue[]
+
+  @@index([ownerId])
+  @@index([speciesId])
+  @@index([breedId])
+  @@index([petName])
+  @@index([microchipNo])
+  @@index([status])
+  @@index([deletedAt])
+}
+
+model Appointment {
+  appointmentId   String                     @id @default(uuid())
+  ownerId         String
+  petId           String
+  appointmentDate DateTime
+  startAt         DateTime
+  endAt           DateTime
+  durationMinutes Int                        @default(30)
+  note            String?
+  createdAt       DateTime                   @default(now())
+  updatedAt       DateTime                   @updatedAt
+  appointmentType AppointmentType
+  source          AppointmentSource          @default(ADVANCE_BOOKING)
+  status          AppointmentStatus          @default(BOOKED)
+  deletedAt       DateTime?
+  createdByUserId String?
+  updatedByUserId String?
+  appointmentNo   String                     @unique
+  cancelReason    String?
+  cancelledAt     DateTime?
+  checkedInAt     DateTime?
+  completedAt     DateTime?
+  vetId           String?
+  owner           Owner                      @relation(fields: [ownerId], references: [ownerId])
+  pet             Pet                        @relation(fields: [petId], references: [petId])
+  vet             User?                      @relation("AppointmentVeterinarian", fields: [vetId], references: [userId])
+  medicalQueue    MedicalQueue?
+  statusHistories AppointmentStatusHistory[]
+  groomingSession GroomingSession?
+  visit           Visit?
+
+  @@index([ownerId])
+  @@index([petId])
+  @@index([vetId])
+  @@index([appointmentNo])
+  @@index([appointmentDate])
+  @@index([startAt])
+  @@index([endAt])
+  @@index([appointmentType])
+  @@index([status])
+  @@index([cancelledAt])
+  @@index([checkedInAt])
+  @@index([completedAt])
+  @@index([deletedAt])
+  @@index([appointmentDate, status])
+}
+
+model AppointmentStatusHistory {
+  appointmentStatusHistoryId String             @id @default(uuid())
+  appointmentId              String
+  fromStatus                 AppointmentStatus?
+  toStatus                   AppointmentStatus
+  changedByUserId            String?
+  actionCode                 String
+  reason                     String?
+  note                       String?
+  changedAt                  DateTime           @default(now())
+  deletedAt                  DateTime?
+  createdAt                  DateTime           @default(now())
+  updatedAt                  DateTime           @updatedAt
+  createdByUserId            String?
+  updatedByUserId            String?
+  appointment                Appointment        @relation(fields: [appointmentId], references: [appointmentId])
+  changedByUser              User?              @relation(fields: [changedByUserId], references: [userId])
+
+  @@index([appointmentId])
+  @@index([fromStatus])
+  @@index([toStatus])
+  @@index([changedByUserId])
+  @@index([actionCode])
+  @@index([changedAt])
+}
+
+model MedicalQueue {
+  queueId String @id @default(cuid())
+
+  queueDate   DateTime
+  queueNumber Int
+  queueCode   String
+  queueStatus MedicalQueueStatus   @default(WAITING_TRIAGE)
+  priority    MedicalQueuePriority @default(NORMAL)
+
+  source     AppointmentSource
+  reasonType AppointmentType?
+
+  appointmentId String?      @unique
+  appointment   Appointment? @relation(fields: [appointmentId], references: [appointmentId])
+
+  visitId String? @unique
+  visit   Visit?  @relation(fields: [visitId], references: [visitId])
+
+  ownerId String
+  owner   Owner  @relation(fields: [ownerId], references: [ownerId])
+
+  petId String
+  pet   Pet    @relation(fields: [petId], references: [petId])
+
+  veterinarianId String?
+  veterinarian   User?   @relation("MedicalQueueVeterinarian", fields: [veterinarianId], references: [userId])
+
+  estimatedWaitMinutes Int?
+  actualWaitMinutes    Int?
+
+  checkedInAt DateTime?
+  waitingAt   DateTime?
+  calledAt    DateTime?
+  inServiceAt DateTime?
+  completedAt DateTime?
+  cancelledAt DateTime?
+  noShowAt    DateTime?
+
+  note String?
+
+  createdByUserId String?
+  updatedByUserId String?
+  deletedByUserId String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([queueDate, queueNumber])
+  @@unique([queueDate, queueCode])
+  @@index([queueDate])
+  @@index([queueStatus])
+  @@index([priority])
+  @@index([source])
+  @@index([reasonType])
+  @@index([petId])
+  @@index([ownerId])
+  @@index([veterinarianId])
+  @@index([appointmentId])
+  @@index([visitId])
+  @@index([deletedAt])
+  @@index([queueDate, queueStatus])
+}
+
+model BlockTime {
+  blockTimeId     String        @id @default(uuid())
+  title           String
+  description     String?
+  blockType       BlockTimeType
+  startDateTime   DateTime
+  endDateTime     DateTime
+  veterinarianId  String?
+  groomerId       String?
+  activeFlag      Boolean       @default(true)
+  deletedAt       DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  createdByUserId String?
+  updatedByUserId String?
+  groomer         User?         @relation("BlockTimeGroomer", fields: [groomerId], references: [userId])
+  veterinarian    User?         @relation("BlockTimeVeterinarian", fields: [veterinarianId], references: [userId])
+
+  @@index([blockType])
+  @@index([startDateTime])
+  @@index([endDateTime])
+  @@index([veterinarianId])
+  @@index([groomerId])
+  @@index([activeFlag])
+}
+
+model GroomingSession {
+  groomingSessionId String         @id @default(uuid())
+  appointmentId     String         @unique
+  groomerId         String?
+  groomingStatus    GroomingStatus @default(CHECK_IN)
+  startAt           DateTime?
+  endAt             DateTime?
+  note              String?
+  deletedAt         DateTime?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  createdByUserId   String?
+  updatedByUserId   String?
+  appointment       Appointment    @relation(fields: [appointmentId], references: [appointmentId])
+  groomer           User?          @relation("GroomingSessionGroomer", fields: [groomerId], references: [userId])
+
+  @@index([groomerId])
+  @@index([groomingStatus])
+  @@index([startAt])
+  @@index([endAt])
+}
+
+model Visit {
+  visitId             String            @id @default(uuid())
+  petId               String
+  visitDate           DateTime
+  createdAt           DateTime          @default(now())
+  bodyConditionScore  Int?
+  capillaryRefillTime String?
+  chiefComplaint      String?
+  clinicalNote        String?
+  heartRateBpm        Int?
+  hydrationStatus     String?
+  mucousMembrane      String?
+  respiratoryRateBpm  Int?
+  temperatureC        Decimal?          @db.Decimal(5, 2)
+  temperatureMethod   String?           @default("RECTAL")
+  updatedAt           DateTime          @updatedAt
+  weightKg            Decimal?          @db.Decimal(10, 2)
+  status              VisitStatus       @default(CHECKED_IN)
+  vetId               String?
+  deletedAt           DateTime?
+  createdByUserId     String?
+  updatedByUserId     String?
+  appointmentId       String?           @unique
+  checkedInAt         DateTime?
+  completedAt         DateTime?
+  ownerId             String
+  visitNo             String            @unique
+  visitType           VisitType         @default(CONSULTATION)
+  reasonType          AppointmentType?
+  appetiteStatus      String?
+  coughingFlag        Boolean           @default(false)
+  defecationStatus    String?
+  diarrheaFlag        Boolean           @default(false)
+  mentalStatus        String?
+  painScore           Int?
+  sneezingFlag        Boolean           @default(false)
+  urinationStatus     String?
+  vomitingFlag        Boolean           @default(false)
+  waterIntakeStatus   String?
+  soapNote            SoapNote?
+  vaccineRecords      VaccineRecord[]
+  appointment         Appointment?      @relation(fields: [appointmentId], references: [appointmentId])
+  owner               Owner             @relation(fields: [ownerId], references: [ownerId])
+  pet                 Pet               @relation(fields: [petId], references: [petId])
+  vet                 User?             @relation(fields: [vetId], references: [userId])
+  medicalQueue        MedicalQueue?
+  diagnoses           VisitDiagnosis[]
+  intakeAttachments   VisitAttachment[]
+
+  @@index([visitNo])
+  @@index([appointmentId])
+  @@index([ownerId])
+  @@index([petId])
+  @@index([vetId])
+  @@index([visitDate])
+  @@index([visitType])
+  @@index([reasonType])
+  @@index([status])
+  @@index([checkedInAt])
+  @@index([completedAt])
+  @@index([deletedAt])
+  @@index([visitDate, status])
+}
+
+model VisitAttachment {
+  visitAttachmentId String    @id @default(uuid())
+  visitId           String
+  fileName          String
+  originalFileName  String
+  filePath          String
+  mimeType          String
+  fileSizeBytes     Int
+  category          String    @default("INTAKE")
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  deletedAt         DateTime?
+  createdByUserId   String?
+  updatedByUserId   String?
+  visit             Visit     @relation(fields: [visitId], references: [visitId])
+
+  @@index([visitId])
+  @@index([category])
+  @@index([deletedAt])
+}
+
+model SoapNote {
+  soapNoteId              String         @id @default(uuid())
+  visitId                 String         @unique
+  vetId                   String
+  subjective              String?
+  objective               String?
+  assessment              String?
+  plan                    String?
+  status                  SoapStatus     @default(DRAFT)
+  finalizedAt             DateTime?
+  createdAt               DateTime       @default(now())
+  updatedAt               DateTime       @updatedAt
+  deletedAt               DateTime?
+  createdByUserId         String?
+  updatedByUserId         String?
+  cardiovascularNote      String?
+  clientCommunicationNote String?
+  diagnosisSummary        String?
+  dietHomeCareAdvice      String?
+  differentialNote        String?
+  earsNote                String?
+  eyesNote                String?
+  finalizationNote        String?
+  finalizedByUserId       String?
+  followUpDate            DateTime?
+  followUpNote            String?
+  gastrointestinalNote    String?
+  generalAppearanceNote   String?
+  historyOfPresentIllness String?
+  labImagingPlanNote      String?
+  lymphNodeNote           String?
+  medicationHistory       String?
+  medicationPlanNote      String?
+  musculoskeletalNote     String?
+  neurologicalNote        String?
+  noseNote                String?
+  oralCavityNote          String?
+  ownerConcern            String?
+  painTendernessNote      String?
+  physicalExamSummary     String?
+  problemList             String?
+  procedurePlanNote       String?
+  prognosisNote           String?
+  respiratoryNote         String?
+  skinCoatNote            String?
+  symptomDuration         String?
+  symptomProgression      String?
+  treatmentPlanSummary    String?
+  urogenitalNote          String?
+  vaccinationHistory      String?
+  vaccinePlanNote         String?
+  addendums               SoapAddendum[]
+  vet                     User           @relation(fields: [vetId], references: [userId])
+  visit                   Visit          @relation(fields: [visitId], references: [visitId])
+
+  @@index([visitId])
+  @@index([vetId])
+  @@index([status])
+  @@index([followUpDate])
+  @@index([finalizedAt])
+}
+
+model SoapAddendum {
+  soapAddendumId  String    @id @default(uuid())
+  soapNoteId      String
+  addendumNote    String
+  addedByUserId   String?
+  addedAt         DateTime  @default(now())
+  deletedAt       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  createdByUserId String?
+  updatedByUserId String?
+  soapNote        SoapNote  @relation(fields: [soapNoteId], references: [soapNoteId])
+
+  @@index([soapNoteId])
+  @@index([addedByUserId])
+  @@index([addedAt])
+}
+
+model DiagnosisCode {
+  diagnosisCodeId String           @id @default(uuid())
+  code            String           @unique
+  nameEn          String
+  nameTh          String?
+  description     String?
+  activeFlag      Boolean          @default(true)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  deletedAt       DateTime?
+  createdByUserId String?
+  updatedByUserId String?
+  visits          VisitDiagnosis[]
+
+  @@index([activeFlag])
+}
+
+model VisitDiagnosis {
+  visitDiagnosisId String         @id @default(uuid())
+  visitId          String
+  diagnosisCodeId  String?
+  diagnosisText    String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  diagnosisType    DiagnosisType  @default(PRIMARY)
+  deletedAt        DateTime?
+  createdByUserId  String?
+  updatedByUserId  String?
+  diagnosisCode    DiagnosisCode? @relation(fields: [diagnosisCodeId], references: [diagnosisCodeId])
+  visit            Visit          @relation(fields: [visitId], references: [visitId])
+
+  @@index([visitId])
+  @@index([diagnosisCodeId])
+  @@index([diagnosisType])
+}
+
+model Vaccine {
+  vaccineId           String          @id @default(uuid())
+  vaccineCode         String
+  vaccineName         String
+  speciesId           String
+  defaultIntervalDays Int?
+  validMonths         Int?
+  dosage              String?
+  price               Decimal?        @db.Decimal(12, 2)
+  activeFlag          Boolean         @default(true)
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  deletedAt           DateTime?
+  createdByUserId     String?
+  updatedByUserId     String?
+  species             Species         @relation(fields: [speciesId], references: [speciesId])
+  records             VaccineRecord[]
+
+  @@unique([vaccineCode, speciesId])
+  @@index([speciesId])
+  @@index([activeFlag])
+}
+
+model VaccineRecord {
+  vaccineRecordId   String              @id @default(uuid())
+  visitId           String
+  petId             String
+  vaccineId         String
+  vetId             String
+  injectionDate     DateTime
+  nextDueDate       DateTime?
+  weightAtInjection Decimal?            @db.Decimal(10, 2)
+  lotNo             String?
+  manufacturer      String?
+  status            VaccineRecordStatus @default(GIVEN)
+  remark            String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  deletedAt         DateTime?
+  createdByUserId   String?
+  updatedByUserId   String?
+  pet               Pet                 @relation(fields: [petId], references: [petId])
+  vaccine           Vaccine             @relation(fields: [vaccineId], references: [vaccineId])
+  vet               User                @relation(fields: [vetId], references: [userId])
+  visit             Visit               @relation(fields: [visitId], references: [visitId])
+
+  @@index([visitId])
+  @@index([petId])
+  @@index([vaccineId])
+  @@index([vetId])
+  @@index([nextDueDate])
+  @@index([status])
+}
+
+model AuditLog {
+  auditLogId      String   @id @default(uuid())
+  userId          String?
+  action          String
+  entityName      String
+  entityId        String
+  oldValue        Json?
+  newValue        Json?
+  ipAddress       String?
+  createdAt       DateTime @default(now())
+  createdByUserId String?
+  updatedAt       DateTime @updatedAt
+  updatedByUserId String?
+
+  @@index([userId])
+  @@index([entityName])
+  @@index([entityId])
+  @@index([createdAt])
+}
+
+model Notification {
+  notificationId  String             @id @default(uuid())
+  ownerId         String?
+  petId           String?
+  channel         String
+  title           String
+  message         String
+  sentAt          DateTime?
+  createdAt       DateTime           @default(now())
+  createdByUserId String?
+  updatedAt       DateTime           @updatedAt
+  updatedByUserId String?
+  status          NotificationStatus @default(PENDING)
+
+  @@index([ownerId])
+  @@index([petId])
+  @@index([status])
+}
+
+model JobQueue {
+  jobQueueId      String    @id @default(uuid())
+  jobType         String
+  payload         Json
+  retryCount      Int       @default(0)
+  availableAt     DateTime
+  processedAt     DateTime?
+  createdAt       DateTime  @default(now())
+  createdByUserId String?
+  updatedAt       DateTime  @updatedAt
+  updatedByUserId String?
+  status          JobStatus @default(PENDING)
+
+  @@index([jobType])
+  @@index([status])
+  @@index([availableAt])
+}
+
+enum UserRole {
+  ADMIN
+  CLINIC_OWNER
+  VETERINARIAN
+  VET_ASSISTANT
+  LAB_TECHNICIAN
+  RECEPTIONIST
+  CASHIER
+  PHARMACIST
+  GROOMER
+  STAFF
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  TERMINATED
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  UNKNOWN
+}
+
+enum NeuterStatus {
+  INTACT
+  NEUTERED
+  SPAYED
+  UNKNOWN
+}
+
+enum PetStatus {
+  ACTIVE
+  INACTIVE
+  LOST
+  DECEASED
+  ADOPTED
+}
+
+enum BodySize {
+  SMALL
+  MEDIUM
+  LARGE
+  GIANT
+  UNKNOWN
+}
+
+enum VisitStatus {
+  CHECKED_IN
+  WAITING_VET
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum SoapStatus {
+  DRAFT
+  FINALIZED
+}
+
+enum DiagnosisType {
+  PRIMARY
+  SECONDARY
+  DIFFERENTIAL
+}
+
+enum AppointmentType {
+  CHECKUP
+  VACCINE
+  SICK
+  FOLLOW_UP
+  SURGERY
+  OTHER
+}
+
+enum AppointmentSource {
+  ADVANCE_BOOKING
+  WALK_IN
+}
+
+enum AppointmentStatus {
+  BOOKED
+  CONFIRMED
+  ARRIVED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+  OVERDUE
+}
+
+enum BlockTimeType {
+  LUNCH_BREAK
+  LEAVE
+  HOLIDAY
+  MEETING
+  SURGERY_ROOM
+  GROOMING_AREA
+  BOARDING_AREA
+  OTHER
+}
+
+enum QueueStatus {
+  WAITING
+  CALLED
+  IN_PROGRESS
+  COMPLETED
+  SKIPPED
+  CANCELLED
+}
+
+enum VisitType {
+  CONSULTATION
+  VACCINATION
+  SURGERY
+  EMERGENCY
+  FOLLOW_UP
+}
+
+enum GroomingStatus {
+  CHECK_IN
+  BATHING
+  DRYING
+  HAIRCUT
+  WAITING_OWNER
+  COMPLETED
+  CANCELLED
+}
+
+enum VaccineRecordStatus {
+  GIVEN
+  MISSED
+  CANCELLED
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+  CANCELLED
+}
+
+enum JobStatus {
+  PENDING
+  PROCESSING
+  SUCCESS
+  FAILED
+  RETRY
+  CANCELLED
+}
+
+enum Language {
+  TH
+  EN
+}
+
+enum MedicalQueuePriority {
+  NORMAL
+  URGENT
+  EMERGENCY
+}
+
+enum MedicalQueueStatus {
+  WAITING_TRIAGE
+  TRIAGE_IN_PROGRESS
+  WAITING_VET
+  IN_SERVICE
+  COMPLETED
+  NO_SHOW
+  CANCELLED
+}

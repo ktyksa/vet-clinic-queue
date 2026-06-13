@@ -1,0 +1,50 @@
+Sprint 4A UAT Fix Patch - Medical Queue / Visit / SOAP
+Base file: vet-clinic(34).zip
+
+Files changed:
+1. src/actions/medical-queue.actions.ts
+   - Fixed Queue -> Visit synchronization when Start Service is clicked.
+   - Queue IN_SERVICE now updates related Visit to IN_PROGRESS.
+   - Existing Visit created from Queue is synced to IN_PROGRESS instead of staying CHECKED_IN.
+   - Complete Queue validates SOAP FINALIZED + at least 1 Diagnosis, then sets Visit COMPLETED and Appointment COMPLETED.
+   - Cancel / No Show from Queue now also closes related non-final Visit consistently.
+
+2. src/actions/visit.actions.ts
+   - getVisitById now includes Appointment.medicalQueue for status reconciliation/display.
+   - Complete Visit can complete from stale CHECKED_IN/WAITING_VET only after SOAP finalized + diagnosis exists.
+   - Updating Visit to IN_PROGRESS also syncs Appointment and MedicalQueue to IN_SERVICE.
+   - Completing Visit syncs Appointment and MedicalQueue to COMPLETED.
+
+3. src/actions/soap.actions.ts
+   - getSoapPageData now includes Appointment.medicalQueue so SOAP page can show effective Visit status.
+
+4. src/app/visits/[id]/page.tsx
+   - Visit status badge now uses effective status from Queue when Queue is ahead of Visit.
+   - Current Step calculation fixed: SOAP Finalized + Diagnosis exists => Complete Visit.
+   - Progress calculation fixed: ready-to-complete state now shows 90% instead of being stuck at 80%.
+   - Complete Visit is available when SOAP finalized + diagnosis exists, even if stale Visit status was CHECKED_IN.
+   - Added inline Today's Clinical Entry form on Visit page:
+     * Weight
+     * Temperature
+     * Heart Rate
+     * Respiratory Rate
+     * Body Condition Score
+     * Pain Score
+     * Chief Complaint
+     * Clinical Note
+   - Save returns to Visit Workflow focus.
+
+5. src/app/visits/[id]/soap/page.tsx
+   - SOAP Visit Summary now shows effective Visit status from Queue, not stale CHECKED_IN.
+
+UAT issues addressed:
+- Queue IN_SERVICE but Visit CHECKED_IN bug.
+- Visit badge showing stale CHECKED_IN.
+- Workflow Step stuck at Start Examination.
+- Progress stuck at 80% after SOAP finalized + diagnosis.
+- No data entry for Today's Clinical Snapshot.
+- No data entry for Today's Visit Notes.
+
+Note:
+- This patch ZIP contains only changed files and this changelog, not the full project.
+- Build was not run in sandbox because uploaded ZIP contains only src/prisma and no package.json.
